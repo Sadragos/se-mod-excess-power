@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <CubeBlocks>
-    <Definition xsi:type="MyObjectBuilder_CargoContainerDefinition">
+    <Definition xsi:type="MyObjectBuilder_ConveyorSorterDefinition">
       <Id>
-        <TypeId>CargoContainer</TypeId>
+        <TypeId>ConveyorSorter</TypeId>
         <SubtypeId>ExcessPower</SubtypeId>
       </Id>
       <DisplayName>Excess Power Converter</DisplayName>
@@ -54,9 +54,9 @@
       <PCU>150</PCU>
       <IsAirTight>false</IsAirTight>
       <InventorySize>
-        <X>5</X>
-        <Y>2.5</Y>
-        <Z>2.5</Z>
+        <X>1</X>
+        <Y>1</Y>
+        <Z>1</Z>
       </InventorySize>
     </Definition>
   </CubeBlocks>

@@ -16,12 +16,12 @@ using ExcessPower;
 namespace ExcessPower
 {
 
-    public class Config
+    public class MyConfigHandler
     {
 
-        public static MyConfig Instance;
+        public MyConfig Config;
 
-        public static void Load()
+        public void Load()
         {
             // Load config xml
             if (MyAPIGateway.Utilities.FileExistsInWorldStorage("ExcessPower.xml", typeof(MyConfig)))
@@ -30,7 +30,7 @@ namespace ExcessPower
                 {
                     TextReader reader = MyAPIGateway.Utilities.ReadFileInWorldStorage("ExcessPower.xml", typeof(MyConfig));
                     var xmlData = reader.ReadToEnd();
-                    Instance = MyAPIGateway.Utilities.SerializeFromXML<MyConfig>(xmlData);
+                    Config = MyAPIGateway.Utilities.SerializeFromXML<MyConfig>(xmlData);
                     reader.Dispose();
                     MyLog.Default.WriteLine("ExcessPower: found and loaded");
                 }
@@ -40,16 +40,16 @@ namespace ExcessPower
                 }
             }
 
-            if (Instance == null)
+            if (Config == null)
             {
                 MyLog.Default.WriteLine("ExcessPower: No Config found, creating New");
                 // Create default values
-                Instance = new MyConfig();
+                Config = new MyConfig();
                 Write();
             }
 
-            Instance.MYOB = GetItemBuilder(Instance.ItemId);
-            if (Instance.MYOB == null) ;
+            Config.MYOB = GetItemBuilder(Config.ItemId);
+            if (Config.MYOB == null) ;
                 MyLog.Default.WriteLine("ExcessPower: ERROR - unknown ItemId");
         }
 
@@ -77,14 +77,14 @@ namespace ExcessPower
         }
 
 
-        public static void Write()
+        public void Write()
         {
-            if (Instance == null) return;
+            if (Config == null) return;
 
             try
             {
                 MyLog.Default.WriteLine("ExcessPower: Serializing to XML... ");
-                string xml = MyAPIGateway.Utilities.SerializeToXML<MyConfig>(Instance);
+                string xml = MyAPIGateway.Utilities.SerializeToXML<MyConfig>(Config);
                 MyLog.Default.WriteLine("ExcessPower: Writing to disk... ");
                 TextWriter writer = MyAPIGateway.Utilities.WriteFileInWorldStorage("ExcessPower.xml", typeof(MyConfig));
                 writer.Write(xml);

@@ -37,13 +37,16 @@
     <None Include="Audio\.keepme" />
     <None Include="Data\CubeBlocks.sbc" />
     <None Include="Models\.keepme" />
+    <None Include="modinfo.sbmi" />
     <None Include="Textures\.keepme" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="metadata.mod" />
+    <Content Include="Textures\excess_converter.dds" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Data\Scripts\ExcessPower\Config.cs" />
+    <Compile Include="Data\Scripts\ExcessPower\GridLogic.cs" />
+    <Compile Include="Data\Scripts\ExcessPower\MyConfigHandler.cs" />
     <Compile Include="Data\Scripts\ExcessPower\Core.cs" />
     <Compile Include="Data\Scripts\ExcessPower\MyConfig.cs" />
     <Compile Include="Data\Scripts\ExcessPower\Converter.cs" />

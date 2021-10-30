@@ -28,80 +28,82 @@ using VRage.Game.Entity;
 using VRage.Voxels;
 using SpaceEngineers.Game.ModAPI;
 using ExcessPower;
+using Sandbox.Game.Entities.Cube;
 
 namespace ExcessPower
 {
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_CargoContainer), true, "ExcessPower")]
-    public class Compost : MyGameLogicComponent
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_ConveyorSorter), false, "ExcessPower")]
+    public class Converter : MyGameLogicComponent
     {
         bool _init = false;
-        Sandbox.ModAPI.IMyTerminalBlock TerminalBlock;
+        public MyConveyorSorter Block;
+        public Sandbox.ModAPI.IMyFunctionalBlock TerminalBlock;
+        public GridLogic Logic;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
+            Block = (MyConveyorSorter)Entity;
+            TerminalBlock = (Sandbox.ModAPI.IMyFunctionalBlock)Entity;
+            TerminalBlock.AppendingCustomInfo += AppendingCustomInfo;
+            MyLog.Default.WriteLine("ExcessPower: DEBUG init");
         }
 
-        public override void UpdateBeforeSimulation100()
-        {
-            base.UpdateBeforeSimulation100();
 
-            if (!_init)
-            {
-                TerminalBlock = Entity as Sandbox.ModAPI.IMyTerminalBlock;
-                TerminalBlock.AppendingCustomInfo += AppendingCustomInfo;
-                _init = true;
-            }
-            if (TerminalBlock.IsFunctional)
-            {
-                ConverterGrid gridData = ConverterDatastore.Get(TerminalBlock);
-                gridData.Refresh();
-                float amount = Config.Instance.ItemPerMWs * gridData.EffectiveExcess * 1.66f;
-                TerminalBlock.GetInventory().AddItems((VRage.MyFixedPoint)amount, Config.Instance.MYOB);
-                TerminalBlock.RefreshCustomInfo();
-                RefreshControls(TerminalBlock);
-            }
+        public override void Close()
+        {
+            Logic = null;
+            TerminalBlock.AppendingCustomInfo -= AppendingCustomInfo;
+        }
+
+        public void SetLogic(GridLogic logic)
+        {
+            Logic = logic;
         }
 
         void AppendingCustomInfo(Sandbox.ModAPI.IMyTerminalBlock block, StringBuilder stringBuilder)
         {
             try
             {
-                ConverterGrid gridData = ConverterDatastore.Get(block);
-
                 stringBuilder
                     .Append("Converting Excess Power\n");
-                if (gridData.Solar.Count > 0)
+
+                if(!TerminalBlock.Enabled)
+                {
+                    stringBuilder.Append("- Block disabled");
+                    return;
+                }
+                if (Logic.Solars.Count > 0)
                 {
                     stringBuilder
                         .Append("- ")
-                        .Append(gridData.Solar.Count)
+                        .Append(Logic.Solars.Count)
                         .Append(" Solar Panels: ")
-                        .Append(gridData.EffectiveSolarExcess.ToString("0.00"))
+                        .Append(Logic.EffectiveSolarExcess.ToString("0.00"))
                         .Append(" MW Excess\n");
                 }
-                if (gridData.Wind.Count > 0)
+                if (Logic.Winds.Count > 0)
                 {
                     stringBuilder
                         .Append("- ")
-                        .Append(gridData.Wind.Count)
+                        .Append(Logic.Winds.Count)
                         .Append(" Wind Turbines: ")
-                        .Append(gridData.EffectiveWindExcess.ToString("0.00"))
+                        .Append(Logic.EffectiveWindExcess.ToString("0.00"))
                         .Append(" MW Excess\n");
                 }
-                if (gridData.Converters > 1)
+                if (Logic.WorkingConverters > 1)
                 {
                     stringBuilder
                         .Append("- ")
-                        .Append((gridData.Converters - 1))
+                        .Append((Logic.WorkingConverters - 1))
                         .Append(" other Converters\n");
                 }
                 stringBuilder
                     .Append("\n")
-                    .Append(gridData.EffectiveExcess.ToString("0.00"))
+                    .Append(Logic.EffectiveExcess.ToString("0.00"))
                     .Append(" MW Excess Power ")
                     .Append("\n");
-                float grams = gridData.EffectiveExcess * Config.Instance.ItemPerMWs * 1000f;
+                float grams = Logic.EffectiveExcess * Core.Instance.ConfigHandler.Config.ItemPerMWs * 1000f;
                 if(grams >= 1)
                     stringBuilder
                         .Append((grams).ToString("0.00"))
@@ -117,7 +119,18 @@ namespace ExcessPower
             }
         }
 
-        public static void RefreshControls(Sandbox.ModAPI.IMyTerminalBlock block)
+        internal void Update(double timeDiff)
+        {
+            if (TerminalBlock.Enabled)
+            {
+                float amount = (float)(Core.Instance.ConfigHandler.Config.ItemPerMWs * Logic.EffectiveExcess * timeDiff);
+                TerminalBlock.GetInventory().AddItems((VRage.MyFixedPoint)amount, Core.Instance.ConfigHandler.Config.MYOB);
+                TerminalBlock.RefreshCustomInfo();
+                RefreshControls(TerminalBlock);
+            }
+        }
+
+        public static void RefreshControls(Sandbox.ModAPI.IMyFunctionalBlock block)
         {
 
             if (MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel)
@@ -133,82 +146,6 @@ namespace ExcessPower
                     myCubeBlock.ChangeOwner(owner, share);
                 }
             }
-        }
-    }
-
-    public class ConverterDatastore
-    {
-        public static Dictionary<long, ConverterGrid> Grids = new Dictionary<long, ConverterGrid>();
-
-        public static ConverterGrid Get(Sandbox.ModAPI.IMyTerminalBlock block)
-        {
-            IMyCubeGrid grid = block.CubeGrid;
-            if (!Grids.ContainsKey(grid.EntityId))
-            {
-                Grids.Add(grid.EntityId, new ConverterGrid()
-                {
-                    Grid = grid
-                });
-            }
-            return Grids[grid.EntityId];
-        }
-    }
-
-    public class ConverterGrid
-    {
-        List<IMySlimBlock> blocks = new List<IMySlimBlock>();
-        public IMyCubeGrid Grid;
-        public List<Sandbox.ModAPI.IMyPowerProducer> Solar = new List<Sandbox.ModAPI.IMyPowerProducer>();
-        public List<Sandbox.ModAPI.IMyPowerProducer> Wind = new List<Sandbox.ModAPI.IMyPowerProducer>();
-        public int Converters = 0;
-        private int ScanCountdown = 0;
-        public float SolarExcess = 0f;
-        public float WindExcess = 0f;
-
-        public float TotalExcess => SolarExcess + WindExcess;
-        public float EffectiveExcess => TotalExcess / Math.Max(1, Converters);
-
-        public float EffectiveSolarExcess => SolarExcess / Math.Max(1, Converters);
-        public float EffectiveWindExcess => WindExcess / Math.Max(1, Converters);
-
-
-
-        public void Refresh()
-        {
-            if (--ScanCountdown <= 0)
-            {
-                ScanCountdown = 5;
-
-                blocks.Clear();
-                Solar.Clear();
-                Wind.Clear();
-                Converters = 0;
-
-                Grid.GetBlocks(blocks, b => b.FatBlock != null);
-
-                foreach (IMySlimBlock block in blocks)
-                {
-                    if (block.FatBlock is Sandbox.ModAPI.IMyCargoContainer && block.FatBlock.BlockDefinition.SubtypeId.Equals("ExcessPower"))
-                        Converters++;
-                    else if (block.FatBlock is Sandbox.ModAPI.IMyPowerProducer)
-                    {
-                        Sandbox.ModAPI.IMyPowerProducer prod = (block.FatBlock as Sandbox.ModAPI.IMyPowerProducer);
-                        if (prod != null && prod.BlockDefinition.SubtypeId.Contains("Solar"))
-                            Solar.Add(prod);
-                        else if (prod != null && prod.BlockDefinition.SubtypeId.Contains("Wind"))
-                            Wind.Add(prod);
-                    }
-                }
-            }
-
-            SolarExcess = 0;
-            WindExcess = 0;
-            foreach (Sandbox.ModAPI.IMyPowerProducer p in Solar)
-                SolarExcess += Math.Max(0, p.MaxOutput - p.CurrentOutput);
-
-            foreach (Sandbox.ModAPI.IMyPowerProducer p in Wind)
-                WindExcess += Math.Max(0, p.MaxOutput - p.CurrentOutput);
-
         }
     }
 }
