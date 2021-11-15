@@ -51,6 +51,9 @@ namespace ExcessPower
             Config.MYOB = GetItemBuilder(Config.ItemId);
             if (Config.MYOB == null) ;
                 MyLog.Default.WriteLine("ExcessPower: ERROR - unknown ItemId");
+
+            MyAPIGateway.Utilities.SetVariable<string>("excesspower_item", Config.ItemId);
+            MyAPIGateway.Utilities.SetVariable<float>("excesspower_rate", Config.ItemPerMWs);
         }
 
         public static MyObjectBuilder_PhysicalObject GetItemBuilder(string itemId)

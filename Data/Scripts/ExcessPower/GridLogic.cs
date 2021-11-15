@@ -1,5 +1,6 @@
 ﻿using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+using SpaceEngineers.Game.ModAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -127,9 +128,9 @@ namespace ExcessPower
                 if (block is IMyPowerProducer)
                 {
                     IMyPowerProducer prod = (block as IMyPowerProducer);
-                    if (prod.BlockDefinition.SubtypeId.Contains("Solar"))
+                    if (prod is IMySolarPanel)
                         Solars.Remove(prod);
-                    else if (prod.BlockDefinition.SubtypeId.Contains("Wind"))
+                    else if (prod.BlockDefinition.TypeId == Core.Instance.TurbineType)
                         Winds.Remove(prod);
                     return;
                 }
@@ -146,7 +147,7 @@ namespace ExcessPower
             {
                 if (block is MyConveyorSorter)
                 {
-                    Converter conv = block.GameLogic.GetAs<Converter>();
+                    Converter conv = block?.GameLogic?.GetAs<Converter>();
                     if (conv != null)
                     {
                         conv.SetLogic(this);
@@ -158,7 +159,7 @@ namespace ExcessPower
                 if (block is IMyPowerProducer)
                 {
                     IMyPowerProducer prod = (block as IMyPowerProducer);
-                    if (prod.BlockDefinition.SubtypeId.Contains("Solar"))
+                    if (prod is IMySolarPanel)
                         Solars.Add(prod);
                     else if (prod.BlockDefinition.SubtypeId.Contains("Wind"))
                         Winds.Add(prod);

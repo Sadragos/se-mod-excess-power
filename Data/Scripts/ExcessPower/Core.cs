@@ -38,14 +38,23 @@ namespace ExcessPower
         private readonly List<int> RemoveLogicIndex = new List<int>();
         private readonly MyConcurrentPool<GridLogic> LogicPool = new MyConcurrentPool<GridLogic>();
 
+        private List<IMyTerminalAction> KeepActions = new List<IMyTerminalAction>();
+        private List<IMyTerminalControl> KeepControls = new List<IMyTerminalControl>();
+
+        public Type TurbineType;
+
         public override void LoadData()
         {
             Instance = this;
+            TurbineType = typeof(MyObjectBuilder_WindTurbine);
             MyAPIGateway.Entities.OnEntityAdd += EntityAdded;
-            ConfigHandler = new MyConfigHandler();
-            ConfigHandler.Load();
             MyAPIGateway.TerminalControls.CustomControlGetter += GetCustomControlls;
             MyAPIGateway.TerminalControls.CustomActionGetter += GetCustomActions;
+
+            if (!MyAPIGateway.Multiplayer.IsServer)
+                return;
+            ConfigHandler = new MyConfigHandler();
+            ConfigHandler.Load();
         }
 
         protected override void UnloadData()
@@ -58,17 +67,37 @@ namespace ExcessPower
 
         private void GetCustomActions(Sandbox.ModAPI.IMyTerminalBlock block, List<IMyTerminalAction> actions)
         {
-            if (block.BlockDefinition.SubtypeId.Equals("ExcessPower"))
+            Converter conv = block.GameLogic.GetAs<Converter>();
+            if (conv != null)
             {
-                actions.RemoveRange(actions.Count - 1, 1);
+                KeepActions.Clear();
+                for (int i = 0; i < actions.Count; i++)
+                {
+                    IMyTerminalAction control = actions[i];
+                    if (i < 6) 
+                        KeepActions.Add(control);
+                }
+
+                actions.Clear();
+                actions.AddRange(KeepActions);
             }
         }
 
         private void GetCustomControlls(Sandbox.ModAPI.IMyTerminalBlock block, List<IMyTerminalControl> controls)
         {
-            if(block.BlockDefinition.SubtypeId.Equals("ExcessPower"))
+            Converter conv = block.GameLogic.GetAs<Converter>();
+            if (conv != null)
             {
-                controls.RemoveRange(controls.Count - 8, 8);
+                KeepControls.Clear();
+                for (int i = 0; i < controls.Count; i++)
+                {
+                    IMyTerminalControl control = controls[i];
+                    if (i < 8)
+                        KeepControls.Add(control);
+                }
+
+                controls.Clear();
+                controls.AddRange(KeepControls);
             }
         }
 

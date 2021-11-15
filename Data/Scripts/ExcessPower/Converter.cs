@@ -40,6 +40,8 @@ namespace ExcessPower
         public Sandbox.ModAPI.IMyFunctionalBlock TerminalBlock;
         public GridLogic Logic;
 
+        public float ItemsPerMWs;
+
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
@@ -47,6 +49,7 @@ namespace ExcessPower
             TerminalBlock = (Sandbox.ModAPI.IMyFunctionalBlock)Entity;
             TerminalBlock.AppendingCustomInfo += AppendingCustomInfo;
             MyLog.Default.WriteLine("ExcessPower: DEBUG init");
+            MyAPIGateway.Utilities.GetVariable<float>("excesspower_rate", out ItemsPerMWs);
         }
 
 
@@ -103,7 +106,7 @@ namespace ExcessPower
                     .Append(Logic.EffectiveExcess.ToString("0.00"))
                     .Append(" MW Excess Power ")
                     .Append("\n");
-                float grams = Logic.EffectiveExcess * Core.Instance.ConfigHandler.Config.ItemPerMWs * 1000f;
+                float grams = Logic.EffectiveExcess * ItemsPerMWs * 1000f;
                 if(grams >= 1)
                     stringBuilder
                         .Append((grams).ToString("0.00"))
@@ -123,8 +126,11 @@ namespace ExcessPower
         {
             if (TerminalBlock.Enabled)
             {
-                float amount = (float)(Core.Instance.ConfigHandler.Config.ItemPerMWs * Logic.EffectiveExcess * timeDiff);
-                TerminalBlock.GetInventory().AddItems((VRage.MyFixedPoint)amount, Core.Instance.ConfigHandler.Config.MYOB);
+                if (MyAPIGateway.Multiplayer.IsServer)
+                {
+                    float amount = (float)(ItemsPerMWs * Logic.EffectiveExcess * timeDiff);
+                    TerminalBlock.GetInventory().AddItems((VRage.MyFixedPoint)amount, Core.Instance.ConfigHandler.Config.MYOB);
+                }
                 TerminalBlock.RefreshCustomInfo();
                 RefreshControls(TerminalBlock);
             }

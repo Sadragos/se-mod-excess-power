@@ -16,7 +16,7 @@ namespace ExcessPower
         [ProtoMember(1)]
         public string ItemId = "MyObjectBuilder_Ingot/Uranium";
         [ProtoMember(2)]
-        public float ItemPerMWs = 0.00027778f;
+        public float ItemPerMWs = 0.00027778f;      // Default Rate for 100% Yield
 
         [ProtoIgnore]
         public MyObjectBuilder_PhysicalObject MYOB;

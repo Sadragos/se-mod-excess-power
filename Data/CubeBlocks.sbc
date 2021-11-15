@@ -16,17 +16,17 @@
       <ModelOffset x="0" y="0" z="0"/>
       <Model>Models\Cubes\Large\GeneratorSmall.mwm</Model>
       <Components>
-        <Component Subtype="SteelPlate" Count="150"/>
+        <Component Subtype="InteriorPlate" Count="350"/>
         <Component Subtype="Construction" Count="70"/>
         <Component Subtype="MetalGrid" Count="20"/>
         <Component Subtype="SmallTube" Count="30"/>
         <Component Subtype="Motor" Count="200"/>
         <Component Subtype="Display" Count="2"/>
-        <Component Subtype="Computer" Count="30"/>
-        <Component Subtype="Construction" Count="60"/>
         <Component Subtype="Superconductor" Count="350"/>
         <Component Subtype="PowerCell" Count="250"/>
-        <Component Subtype="InteriorPlate" Count="350"/>
+        <Component Subtype="Computer" Count="30"/>
+        <Component Subtype="Construction" Count="60"/>
+        <Component Subtype="SteelPlate" Count="150"/>
       </Components>
       <CriticalComponent Subtype="Computer" Index="0"/>
             <MountPoints>
